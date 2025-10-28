@@ -8,6 +8,7 @@ Cette installation Nextcloud Hub 29 utilise :
 - **PostgreSQL 16** comme base de données
 - **Redis 7** pour le cache et locking
 - **Nginx** comme frontend pour PHP-FPM
+- **OnlyOffice Document Server** pour l'édition collaborative de documents
 - **Configuration officielle Nextcloud** (résout les problèmes OCS/OCM-provider)
 
 ## 🚀 Installation automatique (Recommandée)
@@ -32,6 +33,7 @@ Le script `install.sh` fait tout automatiquement :
 - ✅ Active le Dashboard
 - ✅ **Applique les optimisations de sécurité** (migrations MIME, indices DB, Client Push)
 - ✅ **Configure les en-têtes de sécurité** (HSTS, CSP, etc.)
+- ✅ **Installe et configure OnlyOffice** automatiquement
 
 **⚠️ Important :** Le script vous demandera d'éditer le fichier `.env` avec vos valeurs avant de continuer.
 
@@ -58,6 +60,8 @@ cp env.example .env
 # - NEXTCLOUD_ADMIN_USER (nom d'utilisateur admin)
 # - NEXTCLOUD_ADMIN_PASSWORD (mot de passe admin)
 # - NEXTCLOUD_DOMAIN (votre domaine)
+# - ONLYOFFICE_JWT_SECRET (clé secrète OnlyOffice)
+# - ONLYOFFICE_DB_PASSWORD (mot de passe DB OnlyOffice)
 ```
 
 ### 3. Démarrage des services
@@ -129,6 +133,7 @@ occ app:list
 - **`foxaprod_nc_fpm`** : Nextcloud PHP-FPM
 - **`foxaprod_nc_nginx`** : Nginx frontend
 - **`foxaprod_nc_cron`** : Cron pour les tâches
+- **`foxaprod_onlyoffice`** : OnlyOffice Document Server
 
 ### Configuration Nginx
 - Configuration officielle Nextcloud 32
@@ -190,6 +195,26 @@ nextcloud/
 └── README.md                   # Ce fichier
 ```
 
+## 📄 OnlyOffice Document Server
+
+### Fonctionnalités
+- **Édition collaborative** en temps réel
+- **Support complet** des formats Microsoft Office (DOCX, XLSX, PPTX)
+- **Support LibreOffice** (ODT, ODS, ODP)
+- **Commentaires et chat** intégrés
+- **Permissions granulaires** (lecture seule, commentaires, édition)
+
+### Configuration automatique
+OnlyOffice est **automatiquement configuré** lors de l'installation :
+- Service Docker intégré au `docker-compose.yml`
+- Configuration via variables d'environnement
+- Activation automatique dans Nextcloud
+- Communication interne sécurisée
+
+### Accès
+- **Interface Nextcloud** : Créer/éditer des documents directement
+- **Administration** : `https://votre-domaine.com/settings/admin/onlyoffice`
+
 ## 🔄 Mise à jour
 
 ```bash
@@ -210,9 +235,10 @@ occ upgrade
 
 En cas de problème :
 1. Vérifier les logs : `docker logs foxaprod_nc_nginx`
-2. Consulter l'Admin Overview : `https://votre-domaine.com/settings/admin/overview`
-3. Vérifier la configuration : `occ config:list system`
+2. Vérifier OnlyOffice : `docker logs foxaprod_onlyoffice`
+3. Consulter l'Admin Overview : `https://votre-domaine.com/settings/admin/overview`
+4. Vérifier la configuration : `occ config:list system`
 
 ---
 
-**✅ Installation testée et fonctionnelle avec Nextcloud Hub 29**
+**✅ Installation testée et fonctionnelle avec Nextcloud Hub 29 + OnlyOffice**

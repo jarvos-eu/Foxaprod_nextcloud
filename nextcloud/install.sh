@@ -62,6 +62,8 @@ setup_env() {
         echo "   - NEXTCLOUD_ADMIN_USER (nom d'utilisateur admin)"
         echo "   - NEXTCLOUD_ADMIN_PASSWORD (mot de passe admin)"
         echo "   - NEXTCLOUD_DOMAIN (votre domaine)"
+        echo "   - ONLYOFFICE_JWT_SECRET (clé secrète OnlyOffice)"
+        echo "   - ONLYOFFICE_DB_PASSWORD (mot de passe DB OnlyOffice)"
         echo ""
         read -p "Appuyez sur Entrée quand vous avez configuré le .env..."
     else
@@ -83,7 +85,8 @@ start_services() {
        docker ps | grep -q foxaprod_nc_redis && \
        docker ps | grep -q foxaprod_nc_fpm && \
        docker ps | grep -q foxaprod_nc_nginx && \
-       docker ps | grep -q foxaprod_nc_cron; then
+       docker ps | grep -q foxaprod_nc_cron && \
+       docker ps | grep -q foxaprod_onlyoffice; then
         log_success "Tous les services sont démarrés"
     else
         log_error "Certains services ne sont pas démarrés"
@@ -142,7 +145,37 @@ post_install_config() {
     log_info "Configuration de l'application par défaut..."
     occ config:system:set defaultapp --value="dashboard"
     
+    # Configuration OnlyOffice
+    configure_onlyoffice
+    
     log_success "Configuration post-installation terminée"
+}
+
+# Configuration OnlyOffice
+configure_onlyoffice() {
+    log_info "Configuration d'OnlyOffice..."
+    
+    alias occ='docker exec -u www-data foxaprod_nc_fpm php occ'
+    
+    # Charger les variables d'environnement
+    source .env
+    
+    # Attendre que OnlyOffice soit prêt
+    log_info "Attente qu'OnlyOffice soit prêt (30 secondes)..."
+    sleep 30
+    
+    # Configurer OnlyOffice dans Nextcloud
+    log_info "Configuration de l'adresse OnlyOffice..."
+    occ config:app:set onlyoffice DocumentServerUrl --value="http://onlyoffice:80/"
+    
+    log_info "Configuration de la clé secrète OnlyOffice..."
+    occ config:app:set onlyoffice DocumentServerSecret --value="$ONLYOFFICE_JWT_SECRET"
+    
+    # Activer OnlyOffice
+    log_info "Activation d'OnlyOffice..."
+    occ app:enable onlyoffice
+    
+    log_success "OnlyOffice configuré avec succès"
 }
 
 # Optimisations de sécurité et performances
@@ -185,13 +218,14 @@ final_check() {
     
     # Vérifier les applications
     log_info "Applications installées :"
-    occ app:list | grep -E "(dashboard|files|photos|activity)"
+    occ app:list | grep -E "(dashboard|files|photos|activity|onlyoffice)"
     
     log_success "Installation terminée avec succès !"
     echo ""
     echo "🌐 Accédez à Nextcloud : https://$NEXTCLOUD_DOMAIN"
     echo "👤 Utilisateur admin : $NEXTCLOUD_ADMIN_USER"
     echo "🔧 Admin panel : https://$NEXTCLOUD_DOMAIN/settings/admin/overview"
+    echo "📄 OnlyOffice : https://$NEXTCLOUD_DOMAIN/settings/admin/onlyoffice"
 }
 
 # Fonction principale

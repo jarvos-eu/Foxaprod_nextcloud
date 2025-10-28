@@ -9,6 +9,8 @@ volumes:
   nc_data:
   pg_data:
   redis_data:
+  onlyoffice_data:
+  onlyoffice_logs:
 
 services:
   db:
@@ -111,4 +113,24 @@ services:
     volumes:
       - nc_data:/var/www/html
     networks: [foxaprod_net]
+    restart: unless-stopped
+
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: foxaprod_onlyoffice
+    environment:
+      - JWT_ENABLED=true
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET}
+      - DB_TYPE=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=onlyoffice
+      - DB_USER=onlyoffice
+      - DB_PWD=${ONLYOFFICE_DB_PASSWORD}
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_logs:/var/log/onlyoffice
+    networks: [foxaprod_net]
+    depends_on:
+      - db
     restart: unless-stopped

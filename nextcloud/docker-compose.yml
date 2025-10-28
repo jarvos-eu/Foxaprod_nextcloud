@@ -11,6 +11,7 @@ volumes:
   redis_data:
   onlyoffice_data:
   onlyoffice_logs:
+  onlyoffice_config:
 
 services:
   db:
@@ -130,9 +131,13 @@ services:
       - SSL_VERIFY=false
       - SSL_CERTIFICATE_PATH=/var/www/onlyoffice/Data/certs/onlyoffice.crt
       - SSL_KEY_PATH=/var/www/onlyoffice/Data/certs/onlyoffice.key
+      - DS_LOG_LEVEL=DEBUG
+      - WOPI_ENABLED=false
+      - USE_UNAUTHORIZED_STORAGE=false
     volumes:
       - onlyoffice_data:/var/www/onlyoffice/Data
       - onlyoffice_logs:/var/log/onlyoffice
+      - onlyoffice_config:/etc/onlyoffice/documentserver
     networks: [foxaprod_net, traefik-public]
     depends_on:
       db:

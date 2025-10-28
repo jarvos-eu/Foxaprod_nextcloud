@@ -127,10 +127,12 @@ services:
       - DB_NAME=onlyoffice
       - DB_USER=onlyoffice
       - DB_PWD=${ONLYOFFICE_DB_PASSWORD}
+      - SSL_VERIFY=false
     volumes:
       - onlyoffice_data:/var/www/onlyoffice/Data
       - onlyoffice_logs:/var/log/onlyoffice
     networks: [foxaprod_net]
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped

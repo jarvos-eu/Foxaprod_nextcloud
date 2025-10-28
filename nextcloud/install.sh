@@ -145,10 +145,37 @@ post_install_config() {
     log_info "Configuration de l'application par défaut..."
     occ config:system:set defaultapp --value="dashboard"
     
+    # Création de la base de données OnlyOffice
+    create_onlyoffice_database
+    
     # Configuration OnlyOffice
     configure_onlyoffice
     
     log_success "Configuration post-installation terminée"
+}
+
+# Création de la base de données OnlyOffice
+create_onlyoffice_database() {
+    log_info "Création de la base de données OnlyOffice..."
+    
+    # Charger les variables d'environnement
+    source .env
+    
+    # Attendre que PostgreSQL soit prêt
+    log_info "Attente que PostgreSQL soit prêt..."
+    sleep 10
+    
+    # Créer l'utilisateur et la base de données OnlyOffice
+    log_info "Création de l'utilisateur OnlyOffice..."
+    docker exec foxaprod_nc_db psql -U nextcloud -d nextclouddb -c "CREATE USER onlyoffice WITH PASSWORD '$ONLYOFFICE_DB_PASSWORD';" || log_warning "Utilisateur onlyoffice existe déjà"
+    
+    log_info "Création de la base de données OnlyOffice..."
+    docker exec foxaprod_nc_db psql -U nextcloud -d nextclouddb -c "CREATE DATABASE onlyoffice OWNER onlyoffice;" || log_warning "Base de données onlyoffice existe déjà"
+    
+    log_info "Attribution des privilèges..."
+    docker exec foxaprod_nc_db psql -U nextcloud -d nextclouddb -c "GRANT ALL PRIVILEGES ON DATABASE onlyoffice TO onlyoffice;" || log_warning "Privilèges déjà attribués"
+    
+    log_success "Base de données OnlyOffice créée avec succès"
 }
 
 # Configuration OnlyOffice

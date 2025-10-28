@@ -174,7 +174,22 @@ occ app:list
    docker exec foxaprod_nc_db pg_isready -U nextcloud -d nextclouddb
    ```
 
-4. **Problèmes de permissions**
+4. **Problèmes OnlyOffice**
+   ```bash
+   # Vérifier les logs OnlyOffice
+   docker logs foxaprod_onlyoffice
+   
+   # Vérifier la connexion DB OnlyOffice
+   docker exec foxaprod_nc_db psql -U nextcloud -d nextclouddb -c "SELECT usename FROM pg_user WHERE usename='onlyoffice';"
+   
+   # Recréer la base de données OnlyOffice si nécessaire
+   docker exec foxaprod_nc_db psql -U nextcloud -d nextclouddb -c "DROP DATABASE IF EXISTS onlyoffice; DROP USER IF EXISTS onlyoffice;"
+   docker exec foxaprod_nc_db psql -U nextcloud -d nextclouddb -c "CREATE USER onlyoffice WITH PASSWORD 'VOTRE_MOT_DE_PASSE';"
+   docker exec foxaprod_nc_db psql -U nextcloud -d nextclouddb -c "CREATE DATABASE onlyoffice OWNER onlyoffice;"
+   docker exec foxaprod_nc_db psql -U nextcloud -d nextclouddb -c "GRANT ALL PRIVILEGES ON DATABASE onlyoffice TO onlyoffice;"
+   ```
+
+5. **Problèmes de permissions**
    ```bash
    # Réparer les permissions
    occ maintenance:repair
@@ -207,6 +222,7 @@ nextcloud/
 ### Configuration automatique
 OnlyOffice est **automatiquement configuré** lors de l'installation :
 - Service Docker intégré au `docker-compose.yml`
+- **Création automatique** de la base de données PostgreSQL
 - Configuration via variables d'environnement
 - Activation automatique dans Nextcloud
 - Communication interne sécurisée

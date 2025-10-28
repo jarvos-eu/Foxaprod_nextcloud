@@ -1,0 +1,18 @@
+<?php
+$CONFIG = [
+  'trusted_domains' => ['foxaprod.jarvos.eu'],
+  'overwriteprotocol' => 'https',
+  'overwritehost' => 'foxaprod.jarvos.eu',
+  'overwrite.cli.url' => 'https://foxaprod.jarvos.eu',
+  'trusted_proxies' => ['172.18.0.0/16'], // adapte au subnet/réseau proxy
+  'forwarded_for_headers' => ['HTTP_X_FORWARDED_FOR'],
+  'default_phone_region' => 'FR',
+
+  // Redis (locking + local)
+  'memcache.locking' => '\\OC\\Memcache\\Redis',
+  'memcache.local'   => '\\OC\\Memcache\\Redis',
+  'redis' => [
+    'host' => 'redis',
+    'port' => 6379,
+  ],
+];

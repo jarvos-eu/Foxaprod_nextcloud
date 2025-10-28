@@ -1,0 +1,5 @@
+# Correctif MIME pour fichiers .mjs
+# Force le type application/javascript pour les fichiers .mjs
+# Évite le warning Nextcloud sur les MIME types incorrects
+
+application/javascript  mjs;

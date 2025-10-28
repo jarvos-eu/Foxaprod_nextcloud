@@ -1,0 +1,111 @@
+version: "3.9"
+
+networks:
+  traefik-public:
+    external: true
+  foxaprod_net:
+    driver: bridge
+
+volumes:
+  nc_data:
+  pg_data:
+  redis_data:
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: foxaprod_nc_db
+    environment:
+      POSTGRES_DB: nextclouddb
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U nextcloud -d nextclouddb"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks: [foxaprod_net]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: foxaprod_nc_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD","redis-cli","ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks: [foxaprod_net]
+    restart: unless-stopped
+
+  app:  # PHP-FPM
+    image: nextcloud:fpm-alpine
+    container_name: foxaprod_nc_fpm
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      # DB
+      POSTGRES_HOST: db
+      POSTGRES_DB: nextclouddb
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Reverse proxy / URL
+      OVERWRITEPROTOCOL: https
+      OVERWRITEHOST: foxaprod.jarvos.eu
+      TRUSTED_PROXIES: 172.18.0.0/16   # adapte au subnet traefik-public ou "traefik" s'il résout
+      OVERWRITECLIURL: https://foxaprod.jarvos.eu
+      # Cache / locking
+      REDIS_HOST: redis
+      REDIS_HOST_PORT: 6379
+    volumes:
+      - nc_data:/var/www/html
+    networks: [foxaprod_net, traefik-public]
+    restart: unless-stopped
+
+  web:  # Nginx devant FPM
+    image: nginx:1.27-alpine
+    container_name: foxaprod_nc_nginx
+    depends_on:
+      - app
+    volumes:
+      - nc_data:/var/www/html:ro
+      - ./nginx/nextcloud.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/mime.types.d/nextcloud_mjs.types:/etc/nginx/mime.types.d/nextcloud_mjs.types:ro
+    networks: [foxaprod_net, traefik-public]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.nextcloud.rule=Host(`foxaprod.jarvos.eu`)
+      - traefik.http.routers.nextcloud.entrypoints=websecure
+      - traefik.http.routers.nextcloud.tls.certresolver=myresolver
+      - traefik.http.services.nextcloud.loadbalancer.server.port=80
+    restart: unless-stopped
+
+  cron:
+    image: nextcloud:fpm-alpine
+    container_name: foxaprod_nc_cron
+    depends_on:
+      - app
+    entrypoint: ["/cron.sh"]   # script fourni par l'image Nextcloud
+    environment:
+      # même contexte que 'app' si tu utilises Redis/DB
+      POSTGRES_HOST: db
+      POSTGRES_DB: nextclouddb
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_HOST_PORT: 6379
+      OVERWRITEPROTOCOL: https
+      OVERWRITEHOST: foxaprod.jarvos.eu
+      TRUSTED_PROXIES: 172.18.0.0/16
+      OVERWRITECLIURL: https://foxaprod.jarvos.eu
+    volumes:
+      - nc_data:/var/www/html
+    networks: [foxaprod_net]
+    restart: unless-stopped

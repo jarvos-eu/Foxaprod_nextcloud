@@ -9,9 +9,6 @@ volumes:
   nc_data:
   pg_data:
   redis_data:
-  onlyoffice_data:
-  onlyoffice_logs:
-  onlyoffice_config:
 
 services:
   db:
@@ -116,37 +113,20 @@ services:
     networks: [foxaprod_net]
     restart: unless-stopped
 
-  onlyoffice:
-    image: onlyoffice/documentserver:latest
-    container_name: foxaprod_onlyoffice
+  collabora:
+    image: collabora/code:latest
+    container_name: foxaprod_collabora
     environment:
-      - JWT_ENABLED=true
-      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET}
-      - DB_TYPE=postgres
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=onlyoffice
-      - DB_USER=onlyoffice
-      - DB_PWD=${ONLYOFFICE_DB_PASSWORD}
-      - SSL_VERIFY=false
-      - SSL_CERTIFICATE_PATH=/var/www/onlyoffice/Data/certs/onlyoffice.crt
-      - SSL_KEY_PATH=/var/www/onlyoffice/Data/certs/onlyoffice.key
-      - DS_LOG_LEVEL=DEBUG
-      - WOPI_ENABLED=false
-      - USE_UNAUTHORIZED_STORAGE=false
-    volumes:
-      - onlyoffice_data:/var/www/onlyoffice/Data
-      - onlyoffice_logs:/var/log/onlyoffice
-      - onlyoffice_config:/etc/onlyoffice/documentserver
+      - DONT_GEN_SSL_CERT=yes
+      - domain=nextcloud\.foxaprod\.jarvos\.eu
+      - username=admin
+      - password=${COLLABORA_PASSWORD}
     networks: [foxaprod_net, traefik-public]
-    depends_on:
-      db:
-        condition: service_healthy
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.onlyoffice.rule=Host(`onlyoffice.foxaprod.jarvos.eu`)
-      - traefik.http.routers.onlyoffice.entrypoints=websecure
-      - traefik.http.routers.onlyoffice.tls.certresolver=myresolver
-      - traefik.http.services.onlyoffice.loadbalancer.server.port=80
+      - traefik.http.routers.collabora.rule=Host(`collabora.foxaprod.jarvos.eu`)
+      - traefik.http.routers.collabora.entrypoints=websecure
+      - traefik.http.routers.collabora.tls.certresolver=myresolver
+      - traefik.http.services.collabora.loadbalancer.server.port=9980
     restart: unless-stopped

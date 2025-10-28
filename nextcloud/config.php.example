@@ -121,7 +121,7 @@ $CONFIG = array (
     'DocumentServerUrl' => 'http://onlyoffice:80/',
     'DocumentServerSecret' => 'CHANGE_ME_ONLYOFFICE_JWT_SECRET',
     'StorageUrl' => 'https://foxaprod.jarvos.eu/',
-    'verify_peer_off' => false, // true seulement pour les certificats auto-signés
+    'verify_peer_off' => true, // true pour autoriser les connexions HTTP internes
   ],
   
   // Configuration des types de fichiers pour OnlyOffice

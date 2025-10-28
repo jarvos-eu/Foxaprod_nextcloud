@@ -128,11 +128,20 @@ services:
       - DB_USER=onlyoffice
       - DB_PWD=${ONLYOFFICE_DB_PASSWORD}
       - SSL_VERIFY=false
+      - SSL_CERTIFICATE_PATH=/var/www/onlyoffice/Data/certs/onlyoffice.crt
+      - SSL_KEY_PATH=/var/www/onlyoffice/Data/certs/onlyoffice.key
     volumes:
       - onlyoffice_data:/var/www/onlyoffice/Data
       - onlyoffice_logs:/var/log/onlyoffice
-    networks: [foxaprod_net]
+    networks: [foxaprod_net, traefik-public]
     depends_on:
       db:
         condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.onlyoffice.rule=Host(`onlyoffice.foxaprod.jarvos.eu`)
+      - traefik.http.routers.onlyoffice.entrypoints=websecure
+      - traefik.http.routers.onlyoffice.tls.certresolver=myresolver
+      - traefik.http.services.onlyoffice.loadbalancer.server.port=80
     restart: unless-stopped

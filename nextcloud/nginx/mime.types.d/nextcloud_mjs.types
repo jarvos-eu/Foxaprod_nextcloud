@@ -1,7 +1,7 @@
 # Correctif MIME pour fichiers .mjs
-# Force le type application/javascript pour les fichiers .mjs
+# Force le type text/javascript pour les fichiers .mjs (compatible Nextcloud 32)
 # Évite le warning Nextcloud sur les MIME types incorrects
 
 types {
-    application/javascript  mjs;
+    text/javascript  mjs;
 }

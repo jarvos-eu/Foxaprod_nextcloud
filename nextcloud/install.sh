@@ -140,9 +140,37 @@ post_install_config() {
     
     # Configurer l'app par défaut
     log_info "Configuration de l'application par défaut..."
-    occ config:system:set defaultapp --value="files"
+    occ config:system:set defaultapp --value="dashboard"
     
     log_success "Configuration post-installation terminée"
+}
+
+# Optimisations de sécurité et performances
+security_optimizations() {
+    log_info "Application des optimisations de sécurité et performances..."
+    
+    alias occ='docker exec -u www-data foxaprod_nc_fpm php occ'
+    
+    # 1. Migrations des types MIME
+    log_info "Exécution des migrations de types MIME..."
+    occ maintenance:repair --include-expensive
+    
+    # 2. Ajout des indices manquants de la base de données
+    log_info "Ajout des indices manquants de la base de données..."
+    occ db:add-missing-indices
+    
+    # 3. Installation de Client Push pour les performances
+    log_info "Installation de Client Push (notify_push)..."
+    occ app:install notify_push
+    
+    # 4. Redémarrage pour activer toutes les optimisations
+    log_info "Redémarrage des services pour activer les optimisations..."
+    docker compose restart app
+    
+    # Attendre que le service redémarre
+    sleep 10
+    
+    log_success "Optimisations de sécurité et performances appliquées"
 }
 
 # Vérification finale
@@ -177,6 +205,7 @@ main() {
     start_services
     install_nextcloud
     post_install_config
+    security_optimizations
     final_check
     
     echo ""

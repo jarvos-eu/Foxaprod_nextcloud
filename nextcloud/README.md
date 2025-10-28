@@ -30,6 +30,8 @@ Le script `install.sh` fait tout automatiquement :
 - ✅ Installe Nextcloud
 - ✅ Configure les applications
 - ✅ Active le Dashboard
+- ✅ **Applique les optimisations de sécurité** (migrations MIME, indices DB, Client Push)
+- ✅ **Configure les en-têtes de sécurité** (HSTS, CSP, etc.)
 
 **⚠️ Important :** Le script vous demandera d'éditer le fichier `.env` avec vos valeurs avant de continuer.
 
@@ -97,9 +99,13 @@ cp config.php.example config.php
 occ app:enable dashboard
 
 # Configurer l'app par défaut
-occ config:system:set defaultapp --value="files"
-# ou pour le dashboard :
-# occ config:system:set defaultapp --value="dashboard"
+occ config:system:set defaultapp --value="dashboard"
+
+# Optimisations de sécurité et performances (automatiques avec install.sh)
+occ maintenance:repair --include-expensive
+occ db:add-missing-indices
+occ app:install notify_push
+docker compose restart app
 ```
 
 ### 6. Vérification finale
@@ -128,7 +134,16 @@ occ app:list
 - Configuration officielle Nextcloud 32
 - Résout automatiquement les problèmes OCS/OCM-provider
 - Gestion correcte des URLs "pretty" (`/apps/photos/`)
-- Headers de sécurité complets
+- **Headers de sécurité complets** (HSTS, CSP, X-Frame-Options, etc.)
+
+### Optimisations de sécurité automatiques
+- **Migrations des types MIME** : Améliore la gestion des fichiers
+- **Indices de base de données** : Optimise les performances des requêtes
+- **Client Push (notify_push)** : Améliore les performances de synchronisation
+- **En-têtes de sécurité** : Protection contre les attaques XSS, CSRF, etc.
+- **Fenêtre de maintenance** : Configurée à 2h du matin
+- **Politique de mots de passe** : Mots de passe sécurisés requis
+- **Protection contre les attaques par force brute** : Activée
 
 ### Réseaux Docker
 - **`foxaprod_net`** : Réseau interne

@@ -121,6 +121,7 @@ services:
       - domain=nextcloud\.foxaprod\.jarvos\.eu
       - username=admin
       - password=${COLLABORA_PASSWORD}
+      - extra_params=--o:ssl.enable=false --o:ssl.termination=true
     networks: [foxaprod_net, traefik-public]
     labels:
       - traefik.enable=true
